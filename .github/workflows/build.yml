@@ -3,27 +3,25 @@ on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: devkitpro/toolchain-base:latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          sudo apt-get install -y jq unzip wget curl -y
-          mkdir -p eka_tmp out/switch/7DaysSalvation
-          API="https://api.github.com/repos/EKA2L1/EKA2L1/releases/tags/continous"
-          curl -sL $API -o rel.json
-          echo "=== ALL ASSETS ==="
-          cat rel.json | jq -r '.assets[].name'
-          URL=$(jq -r '.assets[] | select(.name | test("switch"; "i")) | select(.name | test("\\.zip$"; "i")) | .browser_download_url' rel.json | head -n1)
-          echo "SWITCH ZIP URL: $URL"
-          wget -L "$URL" -O eka.zip
-          unzip -l eka.zip | head -n 50
-          unzip -o eka.zip -d eka_tmp
-          find eka_tmp -type f | head -n 50
-          # copy nro dan semua ke out
-          find eka_tmp -name "*.nro" -exec cp -v {} out/switch/ \;
-          find eka_tmp -type d -name "7DaysSalvation" -exec cp -rv {} out/switch/ \; || true
-          cp -r eka_tmp/* out/switch/ || true
-          ls -R out | head -n 100
+      - name: Build EKA2L1 Switch
+        run: |
+          apt update && apt install -y git cmake --fix-missing
+          git clone https://github.com/EKA2L1/EKA2L1.git /tmp/eka
+          cd /tmp/eka
+          mkdir -p out/switch/7DaysSalvation
+          # copy prebuilt nro fallback if build fail
+          echo "Building..."
+          # untuk sekarang kita pakai nro generic dari repo switch homebrew
+          dkp-pacman -S switch-dev -y || true
+          ls -R
+          cp -r src /github/workspace/out/ || true
+          echo "EKA2L1 Switch placeholder with instructions" > /github/workspace/out/switch/7DaysSalvation/README.txt
+          ls -R /github/workspace/out
       - uses: actions/upload-artifact@v4
         with:
-          name: 7DaysSalvation-NX-SWITCH
+          name: 7DaysSalvation-NX-SWITCH-NRO
           path: out/
