@@ -1,0 +1,28 @@
+name: Build 7 Days Salvation NX
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download game dari Drive abang
+        run: |
+          pip install gdown
+          mkdir -p package/switch/7DaysSalvation
+          gdown --id 1saj5Sy6G1RfzGj4P0RIJQ1XOkAGEGDCd -O game.sis
+          ls -lh game.sis
+          cp game.sis package/switch/7DaysSalvation/
+          
+      - name: Download EKA2L1 Switch
+        run: |
+          wget https://github.com/EKA2L1/EKA2L1/releases/download/0.0.9/eka2l1-v0.0.9-switch.zip -O eka.zip || wget https://github.com/EKA2L1/EKA2L1/releases/latest/download/eka2l1_switch.zip -O eka.zip
+          unzip eka.zip -d eka_tmp || true
+          find eka_tmp -name "*.nro" -exec cp {} package/switch/7DaysSalvation/7DaysSalvation.nro \;
+          echo "Siap"
+          
+      - name: Upload hasil
+        uses: actions/upload-artifact@v4
+        with:
+          name: 7DaysSalvation-NX
+          path: package/
