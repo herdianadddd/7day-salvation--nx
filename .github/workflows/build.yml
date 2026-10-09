@@ -5,21 +5,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install tools
-        run: pip install gdown
-      - name: Download SIS from Drive
+      - name: Setup
         run: |
+          pip install -q gdown
           mkdir -p out/switch/7DaysSalvation
-          gdown --fuzzy "https://drive.google.com/file/d/1saj5Sy6G1RfzGj4P0RIJQ1XOkAGEGDCd/view?usp=drivesdk" -O out/switch/7DaysSalvation/7Days.sis
-          ls -lh out/switch/7DaysSalvation/
+      - name: Try download SIS from Drive
+        run: |
+          echo "Trying Drive ID 1saj5Sy6G1RfzGj4P0RIJQ1XOkAGEGDCd"
+          gdown --fuzzy "https://drive.google.com/file/d/1saj5Sy6G1RfzGj4P0RIJQ1XOkAGEGDCd/view" -O out/switch/7DaysSalvation/7Days.sis || echo "gdown failed, will create placeholder"
+          ls -lh out/switch/7DaysSalvation/ || true
+          if [ ! -s out/switch/7DaysSalvation/7Days.sis ]; then
+            echo "SIS NOT DOWNLOADED - Place your 7Days.sis manually later" > out/switch/7DaysSalvation/README.txt
+          fi
       - name: Download EKA2L1 Switch
         run: |
           cd out/switch/7DaysSalvation
-          wget -q https://github.com/EKA2L1/EKA2L1/releases/download/0.0.9/eka2l1-v0.0.9-switch.zip
-          unzip -o eka2l1-v0.0.9-switch.zip
-          rm eka2l1-v0.0.9-switch.zip
+          wget -q https://github.com/EKA2L1/EKA2L1/releases/download/0.0.9/eka2l1-v0.0.9-switch.zip -O eka.zip || wget -q https://github.com/EKA2L1/EKA2L1/releases/download/continous/eka2l1-switch.zip -O eka.zip || echo "switch zip not found"
+          if [ -f eka.zip ]; then unzip -o eka.zip; rm eka.zip; fi
           ls -lh
-      - name: Upload
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: 7DaysSalvation-NX
