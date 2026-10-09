@@ -5,31 +5,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download EKA2L1 Switch
-        run: |
+      - run: |
           sudo apt-get install -y jq unzip wget curl -y
           mkdir -p eka_tmp out/switch/7DaysSalvation
-          # tag benernya typo: continous
           API="https://api.github.com/repos/EKA2L1/EKA2L1/releases/tags/continous"
-          echo "Fetch $API"
           curl -sL $API -o rel.json
+          echo "=== ALL ASSETS ==="
           cat rel.json | jq -r '.assets[].name'
-          URL=$(jq -r '.assets[] | select(.name | test("switch"; "i")) | .browser_download_url' rel.json | head -n1)
-          echo "Switch URL: $URL"
-          if [ -z "$URL" ] || [ "$URL" = "null" ]; then
-            URL=$(jq -r '.assets[0].browser_download_url' rel.json)
-          fi
-          echo "Downloading $URL"
-          wget -L "$URL" -O eka.zip || curl -L "$URL" -o eka.zip
-          ls -lh eka.zip
+          URL=$(jq -r '.assets[] | select(.name | test("switch"; "i")) | select(.name | test("\\.zip$"; "i")) | .browser_download_url' rel.json | head -n1)
+          echo "SWITCH ZIP URL: $URL"
+          wget -L "$URL" -O eka.zip
+          unzip -l eka.zip | head -n 50
           unzip -o eka.zip -d eka_tmp
-          find eka_tmp -type f | head -n 30
-          # copy semua isi switch ke out
-          cp -r eka_tmp/* out/ || true
-          # cari nro
-          find eka_tmp -name "*.nro" -exec cp -v {} out/switch/7DaysSalvation/ \; || true
-          ls -R out
+          find eka_tmp -type f | head -n 50
+          # copy nro dan semua ke out
+          find eka_tmp -name "*.nro" -exec cp -v {} out/switch/ \;
+          find eka_tmp -type d -name "7DaysSalvation" -exec cp -rv {} out/switch/ \; || true
+          cp -r eka_tmp/* out/switch/ || true
+          ls -R out | head -n 100
       - uses: actions/upload-artifact@v4
         with:
-          name: 7DaysSalvation-NX-FINAL
+          name: 7DaysSalvation-NX-SWITCH
           path: out/
